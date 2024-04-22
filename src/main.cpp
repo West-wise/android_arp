@@ -1,7 +1,7 @@
 #include <cstdio>
 #include <pcap.h>
-#include "../header/ethhdr.h"
-#include "../header/arphdr.h"
+#include "ethhdr.h"
+#include "arphdr.h"
 
 //include for MAC
 #include <iostream>

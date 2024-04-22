@@ -1,4 +1,4 @@
-#include "../header/ip.h"
+#include "ip.h"
 #include <cstdio>
 
 Ip::Ip(const std::string r) {
