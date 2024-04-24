@@ -1,5 +1,5 @@
 #include <cstdio>
-#include <pcap.h>
+
 #include "ethhdr.h"
 #include "arphdr.h"
 
@@ -10,6 +10,8 @@
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <unistd.h>
+
+#include <pcap.h>
 
 #define MAC_ADDR_LEN 6
 

@@ -15,7 +15,7 @@ if [[ "$ARCHITECTURE" == "arm64" ]]; then
         echo "CMake Error: Failed to configure the arm64 build"
         exit 1
     else
-        make install
+        make
     fi
 
 elif [[ "$ARCHITECTURE" == "arm32" ]]; then
@@ -23,7 +23,7 @@ elif [[ "$ARCHITECTURE" == "arm32" ]]; then
         echo "CMake Error: Failed to configure the arm32 build"
         exit 1
     else
-        make install
+        make
     fi
 else
     # If an unsupported architecture is provided
