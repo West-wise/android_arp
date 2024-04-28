@@ -9,7 +9,7 @@ set(LIBPCAP_INCLUDE_DIR ${PCAP_LIB_DIR}/sysroot/include)
 set(LIBPCAP_LIBRARY_DIR ${PCAP_LIB_DIR}/sysroot/lib)
 
 # 소스 파일의 헤더 디렉토리 및 LIBPCAP_INCLUDE_DIR, LIBPCAP_LIBRARY_DIR을 포함합니다.
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/header)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../header)
 include_directories(${LIBPCAP_INCLUDE_DIR})
 include_directories(${LIBPCAP_LIBRARY_DIR})
 
@@ -28,11 +28,11 @@ add_compile_options(-g)
 
 # 소스 파일들을 변수에 저장합니다.
 set(SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/arphdr.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/ethhdr.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/ip.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/mac.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/arphdr.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/ethhdr.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/ip.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/mac.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/main.cpp
 )
 
 # 실행 파일을 추가합니다.

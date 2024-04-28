@@ -6,12 +6,12 @@ ARCHITECTURE=$1
 rm -rf CMakeCache.txt CMakeFiles cmake_install.cmake Makefile
 
 if [ -z "$ARCHITECTURE" ]; then
-    cmake .
+    cmake build
     exit 0
 fi
 
 if [[ "$ARCHITECTURE" == "arm64" ]]; then
-    if ! cmake -DCMAKE_TOOLCHAIN_FILE=$Android .; then
+    if ! cmake -DCMAKE_TOOLCHAIN_FILE=$Android build; then
         echo "CMake Error: Failed to configure the arm64 build"
         exit 1
     else
@@ -19,7 +19,7 @@ if [[ "$ARCHITECTURE" == "arm64" ]]; then
     fi
 
 elif [[ "$ARCHITECTURE" == "arm32" ]]; then
-    if ! cmake -DCMAKE_TOOLCHAIN_FILE=$Android -DBIT=32 .; then
+    if ! cmake -DCMAKE_TOOLCHAIN_FILE=$Android -DBIT=32 build; then
         echo "CMake Error: Failed to configure the arm32 build"
         exit 1
     else
