@@ -61,8 +61,6 @@ Ip myIp(char* interfaceName){
     return ip_address;
 }
 
-
-
 // get Sender Mac automation
 // send arp request to sender
 // then, can receive sender Mac Addr
@@ -129,6 +127,7 @@ EthArpPacket Make_packet(char* interfaceName,
     Mac macAddress = myMac(interfaceName);
     Mac SenderMac = getSMAC(sip,interfaceName,my_mac,my_ip);
     packet.eth_.dmac_ = SenderMac; //Sender MAC
+    
     packet.eth_.smac_ = Mac(my_mac); //내 MAC
     packet.eth_.type_ = htons(EthHdr::Arp);
 
@@ -140,6 +139,7 @@ EthArpPacket Make_packet(char* interfaceName,
     packet.arp_.smac_ = Mac(my_mac); //내 MAC
     packet.arp_.sip_ = htonl(tip); //gateway ip , Input
     packet.arp_.tmac_ = SenderMac; //sender MAC
+    
     packet.arp_.tip_ = htonl(sip); //sender IP
 
     return packet;
