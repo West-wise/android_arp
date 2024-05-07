@@ -1,4 +1,4 @@
-#include "mac.h"
+#include "../header/mac.h"
 
 Mac::Mac(const std::string& r) {
 	std::string s;
@@ -37,6 +37,13 @@ Mac& Mac::broadcastMac() {
 	static uint8_t _value[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 	static Mac res(_value);
 	return res;
+}
+
+Mac& Mac::getMyMac(const std::string& if_name) {
+    std::ifstream iface("/sys/class/net/" + if_name + "/address");
+    std::string str((std::istreambuf_iterator<char>(iface)), std::istreambuf_iterator<char>());
+    static Mac res(str);
+    return res;
 }
 
 // ----------------------------------------------------------------------------

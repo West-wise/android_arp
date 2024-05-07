@@ -16,15 +16,8 @@ include_directories(${LIBPCAP_LIBRARY_DIR})
 # 프로젝트를 정의하고 소스 파일을 추가합니다.
 project(android-arp-${BIT})
 add_compile_options(-g)
-# pcap 라이브러리를 찾습니다.
-# find_library(LIBPCAP_LIBRARY
-#              NAMES pcap
-#              PATHS ${LIBPCAP_LIBRARY_DIR})
+add_compile_options(-O2 -std=c++14)
 
-# # 라이브러리를 찾지 못하면 에러 메시지를 출력합니다.
-# if (NOT LIBPCAP_LIBRARY)
-#     message(FATAL_ERROR "LIBPCAP_LIBRARY not found")
-# endif()
 
 # 소스 파일들을 변수에 저장합니다.
 set(SOURCES
