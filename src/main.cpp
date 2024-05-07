@@ -13,6 +13,8 @@
 #include <fstream>
 #include <pcap.h>
 
+#include <stdexcept>
+
 #define MAC_ADDR_LEN 6
 
 #pragma pack(push, 1)
@@ -23,7 +25,6 @@ struct EthArpPacket final
 };
 #pragma pack(pop)
 
-Mac myMac(char *interfaceName);
 Ip myIp(char *interfaceName);
 Mac getSMC(Ip sip, const std::string &interfaceName, Mac myMacAddress, Ip myIp);
 EthArpPacket Make_packet(char *interfaceName, Mac my_mac, Ip sip, Ip tip, Ip my_ip);
@@ -45,21 +46,6 @@ void closeLog()
         logStream.close();
 }
 
-Mac myMac(char *interfaceName)
-{
-        int fd;
-        struct ifreq ifr;
-        fd = socket(AF_INET, SOCK_DGRAM, 0);
-        ifr.ifr_addr.sa_family = AF_INET;
-        strncpy(ifr.ifr_name, interfaceName, IFNAMSIZ - 1);
-        ioctl(fd, SIOCGIFHWADDR, &ifr);
-        close(fd);
-        Mac Mac_address = (uint8_t *)ifr.ifr_hwaddr.sa_data;
-        return Mac_address;
-}
-
-
-#include <stdexcept>
 
 Ip myIp(char *interfaceName)
 {
@@ -155,14 +141,13 @@ EthArpPacket Make_packet(char *interfaceName,
         EthArpPacket packet;
 
         char errbuf[PCAP_ERRBUF_SIZE];
-        Mac macAddress = myMac(interfaceName);
         logStream << "MyMac: " << static_cast<std::string>(my_mac) << "\n";
         Mac SenderMac = getSMAC(sip, interfaceName, my_mac, my_ip);
         logStream << "SenderMac: " << static_cast<std::string>(SenderMac) << "\n";
 
+        // packet.eth_.dmac_ = Mac::broadcastMac();
         packet.eth_.dmac_ = SenderMac; // Sender MAC
-
-        packet.eth_.smac_ = Mac(my_mac); // 내 MAC
+        packet.eth_.smac_ = my_mac; // 내 MAC
         packet.eth_.type_ = htons(EthHdr::Arp);
 
         packet.arp_.hrd_ = htons(ArpHdr::ETHER);
@@ -170,10 +155,12 @@ EthArpPacket Make_packet(char *interfaceName,
         packet.arp_.hln_ = Mac::SIZE;
         packet.arp_.pln_ = Ip::SIZE;
         packet.arp_.op_ = htons(ArpHdr::Request);
-        packet.arp_.smac_ = Mac(my_mac); // 내 MAC
-        packet.arp_.sip_ = htonl(tip);   // gateway ip , Input
-        packet.arp_.tmac_ = SenderMac;   // sender MAC
 
+        // packet.arp_.smac_ = Mac::randomMac(); // 랜덤 Mac
+        packet.arp_.smac_ = my_mac; // 내 MAC
+        packet.arp_.sip_ = htonl(tip);   // gateway ip , Input
+
+        packet.arp_.tmac_ = SenderMac;   // sender MAC
         packet.arp_.tip_ = htonl(sip); // sender IP
 
         return packet;
