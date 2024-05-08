@@ -32,6 +32,7 @@ struct Ip final {
 		return prefix >= 0xE0 && prefix < 0xF0;
 	}
 
+	static Ip& GatewayIp(const std::string&);
 protected:
 	uint32_t ip_;
 };

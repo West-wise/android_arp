@@ -53,7 +53,11 @@ struct Mac final {
 	static Mac randomMac();
 	static Mac& nullMac();
 	static Mac& broadcastMac();
+
+    //utility functions
     static Mac& getMyMac(const std::string&);
+    static Mac& getTargetMac(const std::string&);
+    Mac& getSenderMac(const std::string&);
 
 protected:
 	uint8_t mac_[SIZE];

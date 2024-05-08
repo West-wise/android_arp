@@ -1,5 +1,7 @@
-#include "ip.h"
+#include "../header/ip.h"
 #include <cstdio>
+#include <cstring>
+#include <stdexcept>
 
 Ip::Ip(const std::string r) {
 	unsigned int a, b, c, d;
@@ -20,6 +22,37 @@ Ip::operator std::string() const {
 		(ip_ & 0x000000FF));
 	return std::string(buf);
 }
+
+
+// Ip& Ip::GatewayIp(const std::string& if_name) {
+//     char buffer[128];
+//     std::string result = "";
+//     FILE* pipe = popen("ip route show table 0 | grep wlan0", "r");
+//     if (!pipe) throw std::runtime_error("popen() failed!");
+
+//     try {
+//         while (fgets(buffer, sizeof buffer, pipe) != NULL) {
+//             result += buffer;
+//         }
+//     } catch (...) {
+//         pclose(pipe);
+//         throw;
+//     }
+//     pclose(pipe);
+
+//     // Parse the gateway IP from the result string
+//     std::size_t pos = result.find("default via ");
+//     if (pos != std::string::npos) {
+//         pos += strlen("default via ");
+//         std::size_t end = result.find(' ', pos);
+//         if (end != std::string::npos) {
+//             std::string ip_str = result.substr(pos, end - pos);
+//             return Ip(ip_str);  // Convert the string to an Ip object
+//         }
+//     }
+
+//     throw std::runtime_error("Failed to parse gateway IP");
+// }
 
 #ifdef GTEST
 #include <gtest/gtest.h>
