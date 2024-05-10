@@ -35,42 +35,6 @@ Mac get_mac(pcap_t *handle, const u_char *packet, size_t packetSize){
     return mac;
 }
 
-
-Mac getTargetMac(Mac myMac, Ip myIp, Ip targetIp, char *interfcae_name)
-{
-    EthArpPacket packet;
-    packet = Make_packet(interfcae_name, Mac::broadcastMac(), myMac, myMac, myIp, Mac::nullMac(), targetIp);
-    Mac TragetMac;
-
-    char errbuf[PCAP_ERRBUF_SIZE];
-    pcap_t *handle = pcap_open_live(interfcae_name, BUFSIZ, 1, 10, errbuf);
-    if (handle == nullptr)
-    {
-        fprintf(stderr, "couldn't open device %s(%s)\n", interfcae_name, errbuf);
-        return Mac::nullMac();
-    }
-
-    int res = pcap_sendpacket(handle, reinterpret_cast<const u_char *>(&packet), sizeof(EthArpPacket));
-    if (res != 0)
-    {
-        fprintf(stderr, "pcap_sendpacket return %d error=%s\n", res, pcap_geterr(handle));
-    }
-    else
-    {
-        struct pcap_pkthdr *header;
-        const u_char *packet;
-        res = pcap_next_ex(handle, &header, &packet);
-        if (res == 1)
-        {
-            // 패킷 수신에 성공한 경우, ARP 응답 패킷에서 해당 IP 주소의 MAC 주소를 추출합니다.
-            EthArpPacket *arpResponsePacket = reinterpret_cast<EthArpPacket *>(const_cast<u_char *>(packet));
-            TragetMac = arpResponsePacket->arp_.smac_;
-        }
-    }
-    pcap_close(handle);
-    return TragetMac;
-}
-
 EthArpPacket Sender_Infection(char *interfaceName, Mac my_mac, Mac SenderMac, Ip sip, Ip tip)
 {
 
@@ -155,21 +119,3 @@ bool checkRecoverPacket(EthArpPacket &packet, Ip SenderIP, Ip TargetIp, Mac Targ
     }
     return false;
 }
-
-
-// Ip getAttackerIp(char *interfaceName)
-// {
-//     int fd = socket(AF_INET, SOCK_DGRAM, 0); // 소켓 생성
-
-//     ifreq ifr{};                                    // ifreq 구조체 생성
-//     strncpy(ifr.ifr_name, interfaceName, IFNAMSIZ); // 인터페이스 이름 설정
-//     ioctl(fd, SIOCGIFADDR, &ifr);                   // IP 주소 가져오기
-//     close(fd);                                      // 소켓 닫기
-
-//     struct sockaddr_in *sockaddr = reinterpret_cast<struct sockaddr_in *>(&ifr.ifr_addr);
-//     char ipBuffer[INET_ADDRSTRLEN];                                       // IP 주소를 저장할 버퍼
-//     inet_ntop(AF_INET, &(sockaddr->sin_addr), ipBuffer, INET_ADDRSTRLEN); // IP 주소를 문자열로 변환하여 저장
-//     printf("Attacker Ip : %s\n", ipBuffer);
-
-//     return Ip(ipBuffer);
-// }
