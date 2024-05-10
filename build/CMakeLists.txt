@@ -14,7 +14,7 @@ include_directories(${LIBPCAP_INCLUDE_DIR})
 include_directories(${LIBPCAP_LIBRARY_DIR})
 
 # 프로젝트를 정의하고 소스 파일을 추가합니다.
-project(android-arp2-${BIT})
+project(android-arp-${BIT})
 add_compile_options(-g)
 add_compile_options(-O2 -std=c++14)
 

