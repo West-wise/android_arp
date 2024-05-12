@@ -1,9 +1,5 @@
 #pragma once
-
-#include <cstdint>
-#include <cstring>
-#include <string>
-#include <fstream>
+#include "INCLUDE.h"
 
 // ----------------------------------------------------------------------------
 // Mac

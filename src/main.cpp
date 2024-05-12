@@ -1,20 +1,7 @@
-#include <cstdio>
-
+#include "INCLUDE.h"
 #include "ethhdr.h"
 #include "arphdr.h"
 #include "utill.h"
-
-// include for MAC
-#include <iostream>
-#include <cstdlib>
-#include <string>
-#include <sys/ioctl.h>
-#include <net/if.h>
-#include <unistd.h>
-#include <fstream>
-#include <pcap.h>
-
-#include <stdexcept>
 
 #define MAC_ADDR_LEN 6
 
@@ -26,40 +13,12 @@ struct DeviceAddress
 };
 #pragma pack(pop)
 
-Ip myIp(char *interfaceName);
-Mac getSMC(Ip sip, const std::string &interfaceName, Mac myMacAddress, Ip myIp);
-EthArpPacket Make_packet(char *interfaceName, Mac my_mac, Ip sip, Ip tip, Ip my_ip);
 
-Ip myIp(char *interfaceName)
-{
-        int sock = socket(AF_INET, SOCK_DGRAM, 0);
-        if (sock < 0)
-        {
-                throw std::runtime_error("Socket error");
-        }
 
-        struct ifreq ifr;
-        ifr.ifr_addr.sa_family = AF_INET;
-        strncpy((char *)ifr.ifr_name, interfaceName, IFNAMSIZ - 1);
+void SendInfectionPacket(pcap_t *handle, EthArpPacket packet);
 
-        if (ioctl(sock, SIOCGIFADDR, &ifr) < 0)
-        {
-                close(sock);
-                throw std::runtime_error("ioctl error");
-        }
 
-        close(sock);
 
-        uint32_t ip_address = ntohl((((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr).s_addr);
-
-        return ip_address;
-}
-
-void usage()
-{
-        std::cout << "syntax: send-arp-test <interface>\n";
-        std::cout << "sample: send-arp-test wlan0\n";
-}
 
 void SendInfectionPacket(pcap_t *handle, EthArpPacket packet)
 {

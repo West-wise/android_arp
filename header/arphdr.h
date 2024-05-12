@@ -1,7 +1,5 @@
 #pragma once
-
-#include <cstdint>
-#include <arpa/inet.h>
+#include "INCLUDE.h"
 #include "mac.h"
 #include "ip.h"
 

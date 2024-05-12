@@ -4,6 +4,12 @@
 #define MAC_ADDR_LEN 6
 
 
+void usage()
+{
+        std::cout << "broadcast: ./android-arp-64 [interface name] [target ip]\n";
+        std::cout << "unicast: ./android-arp-64 [interface name] [sender ip] [target ip]\n";
+}
+
 
 bool sendPacket(pcap_t *handle, const u_char *packet, size_t packetSize) {
     char errbuf[PCAP_ERRBUF_SIZE];
@@ -118,4 +124,30 @@ bool checkRecoverPacket(EthArpPacket &packet, Ip SenderIP, Ip TargetIp, Mac Targ
         }
     }
     return false;
+}
+
+
+Ip myIp(char *interfaceName)
+{
+        int sock = socket(AF_INET, SOCK_DGRAM, 0);
+        if (sock < 0)
+        {
+                throw std::runtime_error("Socket error");
+        }
+
+        struct ifreq ifr;
+        ifr.ifr_addr.sa_family = AF_INET;
+        strncpy((char *)ifr.ifr_name, interfaceName, IFNAMSIZ - 1);
+
+        if (ioctl(sock, SIOCGIFADDR, &ifr) < 0)
+        {
+                close(sock);
+                throw std::runtime_error("ioctl error");
+        }
+
+        close(sock);
+
+        uint32_t ip_address = ntohl((((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr).s_addr);
+
+        return ip_address;
 }

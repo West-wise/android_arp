@@ -1,7 +1,4 @@
-#include "../header/ip.h"
-#include <cstdio>
-#include <cstring>
-#include <stdexcept>
+#include "ip.h"
 
 Ip::Ip(const std::string r) {
 	unsigned int a, b, c, d;

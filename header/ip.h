@@ -1,7 +1,5 @@
 #pragma once
-
-#include <cstdint>
-#include <string>
+#include "INCLUDE.h"
 
 struct Ip final {
 	static const int SIZE = 4;

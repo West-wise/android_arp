@@ -3,6 +3,10 @@
 
 ### Android Command  
 
+build : `bash build.sh [arm64/arm32]`
+
+install : `make install`
+
 broadcast : `./android-arp-64 [interface name] [target ip]`  
 
 unicast : `./android-arp-64 [interface name] [sender ip] [target ip]`
