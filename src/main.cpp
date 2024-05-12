@@ -13,24 +13,6 @@ struct DeviceAddress
 };
 #pragma pack(pop)
 
-
-
-void SendInfectionPacket(pcap_t *handle, EthArpPacket packet);
-
-
-
-
-void SendInfectionPacket(pcap_t *handle, EthArpPacket packet)
-{
-        // EthArpPacket을 그냥 파라미터로 받아서 보내도록 하자..
-        // ARP Spoofing 패킷 전송
-        int res_sender = pcap_sendpacket(handle, reinterpret_cast<const u_char *>(&packet), sizeof(EthArpPacket));
-        if (res_sender != 0)
-        {
-                fprintf(stderr, "pcap_sendpacket (Sender) return %d error=%s\n", res_sender, pcap_geterr(handle));
-        }
-}
-
 int main(int argc, char *argv[])
 {
         if (argc <= 2)

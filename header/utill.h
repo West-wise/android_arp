@@ -38,3 +38,4 @@ bool checkRecoverPacket(EthArpPacket &packet, Ip SenderIP, Ip TargetIp, Mac Targ
 void check_arp_reply(u_char* param, const struct pcap_pkthdr* header, const u_char* pkt_data);
 Mac get_mac(pcap_t *handle, const u_char *packet, size_t packetSize);
 Ip myIp(char *interfaceName);
+void SendInfectionPacket(pcap_t *handle, EthArpPacket packet);
