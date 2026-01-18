@@ -1,5 +1,5 @@
 #pragma once
-#include "INCLUDE.h"
+#include <arpa/inet.h>
 #include "mac.h"
 
 #pragma pack(push, 1)
@@ -8,16 +8,14 @@ struct EthHdr final {
 	Mac smac_;
 	uint16_t type_;
 
-	Mac dmac() { return dmac_; }
-	Mac smac() { return smac_; }
-	uint16_t type() { return ntohs(type_); }
+	// Getter : 네트워크 바이트 오더 -> 호스트 바이트 오더
+	uint16_t  type() const {return ntohs(type_);}
 
 	// Type(type_)
-	enum: uint16_t {
+	enum Type: uint16_t {
 		Ip4 = 0x0800,
 		Arp = 0x0806,
 		Ip6 = 0x86DD
 	};
 };
-typedef EthHdr *PEthHdr;
 #pragma pack(pop)
