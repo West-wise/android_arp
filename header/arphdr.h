@@ -1,32 +1,28 @@
 #pragma once
-#include "INCLUDE.h"
+#include <cstdint>
+#include <arpa/inet.h>
 #include "mac.h"
 #include "ip.h"
 
 #pragma pack(push, 1)
 struct ArpHdr final {
-	uint16_t hrd_;
-	uint16_t pro_;
-	uint8_t hln_;
-	uint8_t pln_;
-	uint16_t op_;
-	Mac smac_;
-	Ip sip_;
-	Mac tmac_;
-	Ip tip_;
+	uint16_t	hrd_;  // 하드웨어 타입
+	uint16_t	pro_;  // 프로토콜 타입
+	uint8_t		hln_;  // 하드웨어 주소 길이
+	uint8_t		pln_;  // 프로토콜 주소 길이
+	uint16_t	op_;   // 오퍼레이션(Request/Reply)
+	Mac			smac_; // Sender Mac
+	Ip			sip_;  // Sender Mac
+	Mac			tmac_; // Target Mac
+	Ip			tip_;  // Target IP
 
-	uint16_t hrd() { return ntohs(hrd_); }
-	uint16_t pro() { return ntohs(pro_); }
-	uint8_t hln() { return hln_;}
-	uint8_t pln() { return pln_;}
-	uint16_t op() { return ntohs(op_); }
-	Mac smac() { return smac_; }
-	Ip sip() { return ntohl(sip_); }
-	Mac tmac() { return tmac_; }
-	Ip tip() { return ntohl(tip_); }
+
+	uint16_t hrd() const { return ntohs(hrd_); }
+	uint16_t pro() const { return ntohs(pro_); }
+	uint16_t op() const { return ntohs(op_); }
 
 	// HardwareType(hrd_)
-	enum: uint16_t {
+	enum HardwareType : uint16_t {
 		NETROM = 0, // from KA9Q: NET/ROM pseudo
 		ETHER = 1, // Ethernet 10Mbps
 		EETHER = 2, // Experimental Ethernet
@@ -44,7 +40,7 @@ struct ArpHdr final {
 	};
 
 	// Operation(op_)
-	enum: uint16_t {
+	enum Operation : uint16_t {
 		Request = 1, // req to resolve address
 		Reply = 2, // resp to previous request
 		RevRequest = 3, // req protocol address given hardware
@@ -53,5 +49,4 @@ struct ArpHdr final {
 		InvReply = 9 // resp identifying peer
 	};
 };
-typedef ArpHdr *PArpHdr;
 #pragma pack(pop)
