@@ -11,7 +11,7 @@ struct Ip final {
 	// constructor
 	Ip() : ip_(0) {}
 	Ip(const uint32_t r) : ip_(r) {}
-	explicit Ip(const std::string_view r);
+	explicit Ip(std::string_view r);
 
 	// casting operator
 	operator uint32_t() const { return ip_; } // default
