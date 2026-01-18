@@ -1,35 +1,59 @@
 #include "../header/mac.h"
 
-Mac::Mac(const std::string& r) {
-	std::string s;
-	for(char ch: r) {
-		if ((ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f'))
-			s += ch;
-	}
-	int res = sscanf(s.c_str(), "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx", &mac_[0], &mac_[1], &mac_[2], &mac_[3], &mac_[4], &mac_[5]);
-	if (res != SIZE) {
-		fprintf(stderr, "Mac::Mac sscanf return %d r=%s\n", res, r.c_str());
-		return;
-	}
+Mac::Mac(const uint8_t* r){
+	std::copy(r, r + SIZE, mac_.begin());
 }
 
-Mac::operator std::string() const {
-	char buf[20]; // enough size
-	sprintf(buf, "%02X:%02X:%02X:%02X:%02X:%02X", mac_[0], mac_[1], mac_[2], mac_[3], mac_[4], mac_[5]);
-	return std::string(buf);
-}
+Mac::Mac(const std::string_view r){
+	// 1. 구분자(:, -)를 제거하고 순수 16진수 문자만 추출
+	std::string hex;
+	for(char ch : r){
+		if(std::isxdigit(static_cast<unsigned char>(ch))){
+			hex += ch;
+		}
+	}
+	// 2. 12글자인지 확인
+	if (hex.length() != 12) {
+		throw std::invalid_argument("Invalid MAC address format: " + std::string(r));
+	}
 
-Mac Mac::randomMac() {
-	Mac res;
+	// 3. 2글자씩 끊어서 바이트로 변환
 	for (int i = 0; i < SIZE; i++)
-		res.mac_[i] = uint8_t(rand() % 256);
-	res.mac_[0] &= 0x7F;
+	{
+		mac_[i] = static_cast<uint8_t>(std::stoul(hex.substr(i*2,2), nullptr, 16));
+	}
+}
+
+std::string Mac::toString() const
+{
+	std::ostringstream oss;
+	oss << std::hex << std::setfill('0');
+	for (int i = 0; i<SIZE; i++)
+	{
+		oss << std::setw(2) << static_cast<int>(mac_[i]);
+		if (i < SIZE - 1) oss << ":";
+	}
+	return oss.str();
+}
+
+Mac Mac::randomMac()
+{
+	Mac res;
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_int_distribution<> dis(0, 255);
+
+	for (int i = 0; i < SIZE; i++)
+	{
+		res.mac_[i] = static_cast<uint8_t>(dis(gen));
+	}
+	res.mac_[0] &= 0xFE;
 	return res;
 }
 
-Mac& Mac::nullMac() {
-	static uint8_t _value[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-	static Mac res(_value);
+Mac& Mac::nullMac()
+{
+	static Mac res;
 	return res;
 }
 
@@ -39,11 +63,15 @@ Mac& Mac::broadcastMac() {
 	return res;
 }
 
-Mac& Mac::getMyMac(const std::string& if_name) {
-    std::ifstream iface("/sys/class/net/" + if_name + "/address");
-    std::string str((std::istreambuf_iterator<char>(iface)), std::istreambuf_iterator<char>());
-    static Mac res(str);
-    return res;
+Mac Mac::getMyMac(const std::string_view if_name) {
+    std::ifstream iface("/sys/class/net/" + std::string(if_name) + "/address");
+	if (!iface.is_open())
+	{
+		throw std::runtime_error("Failed to open interface: " + std::string(if_name));
+	}
+	std::string str;
+	iface >> str;
+	return Mac(str);
 }
 
 // ----------------------------------------------------------------------------
