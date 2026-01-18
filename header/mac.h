@@ -1,62 +1,54 @@
 #pragma once
-#include "INCLUDE.h"
 
+#include <cstdint>
+#include <string>
+#include <string_view>
+#include <array>
+#include <functional>
+#include <cstdio>
+#include <iomanip>
+#include <sstream>
+#include <algorithm>
+#include <fstream>
+#include <random>
 // ----------------------------------------------------------------------------
 // Mac
 // ----------------------------------------------------------------------------
 struct Mac final {
-    friend struct std::hash<Mac>;
 	static constexpr int SIZE = 6;
 
 	// constructor
-	Mac() {}
-	Mac(const Mac& r) { memcpy(this->mac_, r.mac_, SIZE); }
-	Mac(const uint8_t* r) { memcpy(this->mac_, r, SIZE); }
-	Mac(const std::string& r);
+	Mac() { mac_.fill(0); } // 기본 생성자: 00:00:00:00:00:00
+	Mac(const uint8_t* r);
 
-	// assign operator
-	Mac& operator = (const Mac& r) { memcpy(this->mac_, r.mac_, SIZE); return *this; }
-
-	// casting operator
-	explicit operator uint8_t*() const { return const_cast<uint8_t*>(mac_); }
-	explicit operator std::string() const;
+	// 명시적 생성자
+	explicit Mac(const std::string_view r);
 
 	// comparison operator
-	bool operator == (const Mac& r) const { return memcmp(mac_, r.mac_, SIZE) == 0; }
-	bool operator != (const Mac& r) const { return memcmp(mac_, r.mac_, SIZE) != 0; }
-	bool operator < (const Mac& r) const { return memcmp(mac_, r.mac_, SIZE) < 0; }
-	bool operator > (const Mac& r) const { return memcmp(mac_, r.mac_, SIZE) > 0; }
-	bool operator <= (const Mac& r) const { return memcmp(mac_, r.mac_, SIZE) <= 0; }
-	bool operator >= (const Mac& r) const { return memcmp(mac_, r.mac_, SIZE) >= 0; }
-	bool operator == (const uint8_t* r) const { return memcmp(mac_, r, SIZE) == 0; }
+	bool operator == (const Mac& r) const { return mac_ == r.mac_;}
+	bool operator != (const Mac& r) const { return mac_ != r.mac_; }
+	bool operator < (const Mac& r) const { return mac_ < r.mac_; }
 
-	void clear() {
-		*this = nullMac();
-	}
+	// 명시적 문자열 변환 메서드
+	std::string toString() const;
 
-	bool isNull() const {
-		return *this == nullMac();
-	}
-
-	bool isBroadcast() const { // FF:FF:FF:FF:FF:FF
-		return *this == broadcastMac();
-	}
-
-	bool isMulticast() const { // 01:00:5E:0*
-		return mac_[0] == 0x01 && mac_[1] == 0x00 && mac_[2] == 0x5E && (mac_[3] & 0x80) == 0x00;
-	}
+	// 포인터 접근 제공 (libcap등 C API 호환성용)
+	const uint8_t* data() const { return mac_.data(); }
 
 	static Mac randomMac();
 	static Mac& nullMac();
 	static Mac& broadcastMac();
 
     //utility functions
-    static Mac& getMyMac(const std::string&);
+    static Mac getMyMac(const std::string_view if_name);
     static Mac& getTargetMac(const std::string&);
     Mac& getSenderMac(const std::string&);
 
 protected:
-	uint8_t mac_[SIZE];
+	std::array<uint8_t, SIZE> mac_;
+
+	// 해시 지원을 위한 friend선언 (unordered_map 등 사용시 필요함)
+	friend struct std::hash<Mac>;
 };
 
 namespace std {
