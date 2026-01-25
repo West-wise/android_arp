@@ -1,7 +1,7 @@
 #include "ip.h"
 #include <arpa/inet.h>
 
-Ip::Ip(const std::string_view r) {
+Ip::Ip(std::string_view r) {
 	struct in_addr addr;
 	if (inet_pton(AF_INET, r.data(), &addr) != 1){
 		throw std::invalid_argument("Invalid IPv4 address format: " + std::string(r));
