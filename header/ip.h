@@ -10,7 +10,7 @@ struct Ip final {
 
 	// constructor
 	Ip() : ip_(0) {}
-	Ip(const uint32_t r) : ip_(r) {}
+	Ip(uint32_t r) : ip_(r) {}
 	explicit Ip(const std::string_view r);
 
 	// casting operator
