@@ -4,10 +4,11 @@
 #include <memory>
 
 std::unique_ptr<Engine> engine = nullptr;
+volatile std::sig_atomic_t flag = 0;
 void signalHandler(int signum) {
         (void)signum; // 경고 방지
+        flag = 1;
         if (engine) {
-                std::cout << "\n[Main] Interrupt signal received. Stopping engine..." << std::endl;
                 engine->stop();
         }
 }
