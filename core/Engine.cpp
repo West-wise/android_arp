@@ -32,6 +32,11 @@ void Engine::run() {
     arpFlow_->sendInfectionPacket();
     lastInfectionTime_ = std::chrono::steady_clock::now();
 
+    // 감염 후 필터 설정
+    if (!pcap_->setFilter(arpFlow_->getSenderIp(), arpFlow_->getTargetIp())) {
+        std::cerr << "[Error] Failed to set BPF filter. Stop engine." << std::endl;
+        return;
+    }
     while (running_) {
         // 1. 패킷 수신 (Non-blocking 느낌으로 빠르게)
         int res = pcap_next_ex(handle, &header, &packet);
@@ -69,10 +74,6 @@ void Engine::run() {
 }
 
 void Engine::relayIp(const uint8_t* packet, size_t len) {
-    // *Zero Copy* 전략: 스택 버퍼에 복사 후 수정하여 전송
-    // (pcap 내부 버퍼를 직접 수정하지 않기 위해 1회 복사는 필수적이나,
-    //  힙 할당(vector)보다 스택(array)이 훨씬 빠름)
-
     if (len > 1514) return; // Jumbo frame 등은 무시
 
     uint8_t buffer[1514];

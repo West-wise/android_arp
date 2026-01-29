@@ -52,6 +52,24 @@ bool PcapDevice::sendPacket(const uint8_t *packet, size_t size) {
     return true;
 }
 
+bool PcapDevice::setFilter(const Ip& sender, const Ip& target) {
+    struct bpf_program filter;
+    char buffer[256];
+    std::snprintf(buffer, sizeof(buffer), "arp or (ip and host %s) or (ip and host %s)", sender.toString().c_str(), target.toString().c_str());
+    int res = pcap_compile(handle_, &filter,buffer, 1, PCAP_NETMASK_UNKNOWN);
+    if (res != 0) {
+        std::cerr << "pcap_compile error return " << pcap_geterr(handle_) << std::endl;
+        return false;
+    }
+    res = pcap_setfilter(handle_, &filter);
+    pcap_freecode(&filter);
+    if (res != 0) {
+        std::cerr << "pcap_setfilter error return " << pcap_geterr(handle_) << std::endl;
+        return false;
+    }
+    return true;
+}
+
 // Mac PcapDevice::getMacAddress(){
 //     // ARP request 전송
 //     // ARP를 전송하면 대상은 mac주소를 반환하게 되어있음

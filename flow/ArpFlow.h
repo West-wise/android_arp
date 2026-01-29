@@ -14,6 +14,8 @@ public:
     bool checkRecoverPacket(EthHdr *eth, ArpHdr *arp);
     Mac getSenderMac() const {return senderMac_;}
     Mac getTargetMac() const {return targetMac_;}
+    Ip getSenderIp() const {return senderIp_;}
+    Ip getTargetIp() const {return targetIp_;}
     void recover(); // 공격 종료시 대상 arp테이블 원복
 
 private:

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ip.h"
 #include <pcap.h>
 #include <string>
 #include <vector>
@@ -24,6 +25,7 @@ public:
     PcapDevice& operator=(PcapDevice && other) noexcept;
 
     bool sendPacket(const uint8_t *packet, size_t size);
+    bool setFilter(const Ip& sender, const Ip& target);
 
     // 핸들접근은 허용
     pcap_t *getHandle() const {return handle_;}
