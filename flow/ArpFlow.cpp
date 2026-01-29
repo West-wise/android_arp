@@ -1,6 +1,15 @@
 #include "ArpFlow.h"
+#include "AppConfig.h"
 #include <iostream>
 #include <thread>
+
+namespace {
+    uint64_t elapse_ms(const std::chrono::steady_clock::time_point& start_time) {
+        const auto now = std::chrono::steady_clock::now();
+        const auto diff = now - start_time;
+        return std::chrono::duration_cast<std::chrono::milliseconds>(diff).count();
+    }
+}
 
 
 ArpFlow::ArpFlow(PcapDevice *pcap, Ip sender_ip, Ip target_ip)
@@ -48,23 +57,25 @@ void ArpFlow::sendArpPacket(Mac dmac, Mac smac, uint16_t op, Mac arp_smac, Ip ar
 }
 
 Mac ArpFlow::queryMac(Ip ip) {
-    sendArpPacket(Mac::broadcastMac(), myMac_, ArpHdr::Request, myMac_, myIp_, Mac::nullMac(), ip);
     pcap_t *handle = pcap_->getHandle();
     struct pcap_pkthdr *header;
     const uint8_t *pkt_data;
-    for (int i = 0; i < 20; i++) { // 최대 20번 시도
-        int res = pcap_next_ex(handle, &header, &pkt_data);
-        if (res == 0) continue;
-        if (res == PCAP_ERROR || res == PCAP_ERROR_BREAK) break;
+    for (int i = 0; i < AppConfig::Arp::MAX_RETRY; i++) { // 최대 20번 시도
+        sendArpPacket(Mac::broadcastMac(), myMac_, ArpHdr::Request, myMac_, myIp_, Mac::nullMac(), ip);
+        auto start = std::chrono::steady_clock::now();
+        while (elapse_ms(start) < AppConfig::Arp::RESOLVE_TIMEOUT) {
+            int res = pcap_next_ex(handle, &header, &pkt_data);
+            if (res == 0) continue;
+            if (res == PCAP_ERROR || res == PCAP_ERROR_BREAK) break;
 
-        EthHdr* eth = (EthHdr*)pkt_data;
-        if (eth->type() != EthHdr::Arp) continue;
+            EthHdr* eth = (EthHdr*)pkt_data;
+            if (eth->type() != EthHdr::Arp) continue;
 
-        ArpHdr* arp = (ArpHdr*)(pkt_data + sizeof(EthHdr));
-        if (arp->op() == ArpHdr::Reply && arp->sip_ == ip) {
-            return arp->smac_;
+            ArpHdr* arp = (ArpHdr*)(pkt_data + sizeof(EthHdr));
+            if (arp->op() == ArpHdr::Reply && arp->sip_ == ip) {
+                return arp->smac_;
+            }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
     return Mac::nullMac();
 }
