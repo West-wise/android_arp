@@ -91,7 +91,7 @@ void Engine::relayIp(const uint8_t* packet, size_t len) {
         relayed = true;
     }
     // Target -> Sender 흐름
-    else if (eth->smac_ == arpFlow_->getTargetMac() && ip->dst() == Ip(arpFlow_->getSenderMac().toString())) {
+    else if (eth->smac_ == arpFlow_->getTargetMac() && ip->dst() == arpFlow_->getSenderIp()) {
         // Gateway가 Sender에게 보내는 패킷
         eth->dmac_ = arpFlow_->getSenderMac(); // 목적지를 Sender로
         eth->smac_ = Mac(pcap_->getMacAddress()); // 보낸이를 나로
