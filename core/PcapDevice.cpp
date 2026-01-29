@@ -1,12 +1,13 @@
 #include "PcapDevice.h"
 #include <iostream>
 #include <cstring>
+#include "AppConfig.h"
 #include "mac.h"
 
 // 생성자
 PcapDevice::PcapDevice(std::string_view interfaceName) : interfaceName_(interfaceName) {
     // 핸들 열기
-    handle_ = pcap_open_live(interfaceName_.c_str(), BUFSIZ, 1, 1, errbuf_);
+    handle_ = pcap_open_live(interfaceName_.c_str(), BUFSIZ, 1, AppConfig::System::PCAP_READ_TMOUT_MS, errbuf_);
     if (handle_ == nullptr) throw std::runtime_error("Couldn't open device " + interfaceName_ + ": " + std::string(errbuf_));
     // 생성자 호출 시점에 나의 Mac주소 미리 캐싱
     try {
@@ -69,29 +70,3 @@ bool PcapDevice::setFilter(const Ip& sender, const Ip& target) {
     }
     return true;
 }
-
-// Mac PcapDevice::getMacAddress(){
-//     // ARP request 전송
-//     // ARP를 전송하면 대상은 mac주소를 반환하게 되어있음
-//     if (!sendPacket(handle_, packet, packetSize)){
-//         return Mac::nullMac();
-//     }
-//
-//     // 응답을 대기, 기존의 pcap_loop는 패킷을 받는 즉시 mac주소를 얻을 수 있는 상황일 경우만 유효
-//     constexpr int MAX_TRY = 50;
-//     int try_cnt = 0;
-//     while (try_cnt++ < MAX_TRY) {
-//         struct pcap_pkthdr* header;
-//         const u_char* pkt_data;
-//         int res = pcap_next_ex(handle_, &header, &pkt_data);
-//         if (res == 0) continue;
-//         if (res == -1 || res == -2) break;
-//         struct EthHdr *eh = (struct EthHdr*)pkt_data;
-//         if (eh->type() != EthHdr::Arp) continue;
-//         struct ArpHdr *ah = (struct ArpHdr*)((u_char*)eh + sizeof(EthHdr));
-//         if (ah->op() == ArpHdr::Reply && ah->sip_ == target_ip) {
-//             return ah->smac_;
-//         }
-//     }
-//     return Mac::nullMac();
-// }
